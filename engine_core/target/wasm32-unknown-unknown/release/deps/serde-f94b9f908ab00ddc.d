@@ -1,0 +1,14 @@
+/Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/deps/serde-f94b9f908ab00ddc.d: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/build/serde-49a501fe6cb8812a/out/private.rs
+
+/Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/deps/libserde-f94b9f908ab00ddc.rlib: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/build/serde-49a501fe6cb8812a/out/private.rs
+
+/Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/deps/libserde-f94b9f908ab00ddc.rmeta: /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/build/serde-49a501fe6cb8812a/out/private.rs
+
+/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/build/serde-49a501fe6cb8812a/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/user/screenmu-web/engine_core/target/wasm32-unknown-unknown/release/build/serde-49a501fe6cb8812a/out

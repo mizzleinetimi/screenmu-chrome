@@ -1,0 +1,176 @@
+/* RecordView Styles */
+
+.record-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    gap: 24px;
+}
+
+.preview-container {
+    flex: 1;
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 400px;
+    cursor: crosshair;
+}
+
+.screen-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.camera-pip {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 160px;
+    height: 120px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-border);
+    object-fit: cover;
+    box-shadow: var(--shadow-lg);
+}
+
+.preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-text-muted);
+}
+
+.recording-indicator {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(8px);
+}
+
+.recording-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--color-danger);
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.recording-time {
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.zoom-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    backdrop-filter: blur(8px);
+}
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.capture-options {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.capture-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.capture-options select {
+    padding: 8px 12px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-size: 14px;
+}
+
+.checkbox-label {
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+}
+
+.recording-controls {
+    display: flex;
+    gap: 12px;
+}
+
+/* Countdown Overlay */
+.countdown-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.countdown-number {
+    font-size: 120px;
+    font-weight: 700;
+    color: var(--color-primary);
+    animation: countdownPop 0.5s ease-out;
+}
+
+@keyframes countdownPop {
+    0% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

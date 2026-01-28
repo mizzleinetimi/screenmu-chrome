@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>ScreenMu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 280px;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #f0f0f5;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status {
+            padding: 12px;
+            background: #12121a;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .status-row label {
+            color: #8888aa;
+        }
+
+        .status-value {
+            font-family: monospace;
+        }
+
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recording-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #818cf8;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #f87171;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 11px;
+            color: #8888aa;
+        }
+
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>ScreenMu</h1>
+    </div>
+
+    <div class="status">
+        <div class="status-row">
+            <label>Status:</label>
+            <span id="status-text" class="status-value">Ready</span>
+        </div>
+        <div class="status-row" id="duration-row" style="display: none;">
+            <label>Duration:</label>
+            <span id="duration" class="status-value">00:00</span>
+        </div>
+        <div class="status-row" id="signals-row" style="display: none;">
+            <label>Signals:</label>
+            <span id="signals" class="status-value">0</span>
+        </div>
+    </div>
+
+    <button id="startBtn" class="btn btn-primary">
+        Start Recording
+    </button>
+
+    <button id="stopBtn" class="btn btn-danger" style="display: none;">
+        Stop Recording
+    </button>
+
+    <button id="openBtn" class="btn btn-primary" style="display: none; margin-top: 10px; background: #10b981;">
+        Open in Editor
+    </button>
+
+    <div class="footer">
+        Tab Mode enabled &mdash; cursor tracking active
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
