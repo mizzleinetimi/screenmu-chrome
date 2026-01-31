@@ -452,6 +452,7 @@ function isValidPosition(pos: NormalizedCoord): boolean {
 /**
  * Checks if a position jump is too large to be a real cursor movement.
  * Large jumps typically indicate the cursor left and re-entered the window.
+ * Uses a more lenient threshold to allow fast but legitimate cursor movements.
  */
 function isOutlierJump(
   prevPos: NormalizedCoord,
@@ -469,20 +470,22 @@ function isOutlierJump(
   
   const velocity = distance / timeDeltaSec;
   
-  // A velocity > 5 normalized units per second is unrealistic for smooth cursor movement
-  // This would mean moving across the entire screen 5 times per second
-  // Normal fast cursor movement is around 1-2 units/sec
-  return velocity > 5;
+  // A velocity > 8 normalized units per second is unrealistic for smooth cursor movement
+  // Increased from 5 to 8 to allow faster legitimate movements
+  // This would mean moving across the entire screen 8 times per second
+  // Normal fast cursor movement is around 2-4 units/sec
+  return velocity > 8;
 }
 
 /**
  * Clamps a position to valid normalized coordinates [0, 1].
- * Also adds a small margin to prevent the zoom from going to the very edge.
+ * Uses a smaller margin for more accurate cursor tracking while still
+ * preventing the zoom from going to the very edge.
  */
 function clampPosition(pos: NormalizedCoord): NormalizedCoord {
-  // Add a small margin (10%) to prevent zoom from going to the very edge
-  // This ensures the zoomed area stays within visible bounds
-  const margin = 0.1;
+  // Use a smaller margin (5%) for more accurate cursor following
+  // This allows the zoom to get closer to edges while still staying in bounds
+  const margin = 0.05;
   return {
     x: Math.max(margin, Math.min(1 - margin, pos.x)),
     y: Math.max(margin, Math.min(1 - margin, pos.y)),
@@ -491,26 +494,26 @@ function clampPosition(pos: NormalizedCoord): NormalizedCoord {
 
 /**
  * Interpolates viewport from zoom segments at a given timestamp.
- * Zoom segments define time ranges where zoom is applied, with smooth transitions.
- * If cursor track data is available, the zoom follows the cursor.
+ * Zoom segments define time ranges where zoom is applied, with smooth cinematic transitions.
+ * If cursor track data is available, the zoom follows the cursor with smooth easing.
  * Otherwise, it uses the segment's stored position.
  *
  * Algorithm:
  * - If timestamp is within a zoom segment: return the segment's zoom level centered on cursor/position
- * - If timestamp is in the transition zone (200ms before/after segment): ease in/out
+ * - If timestamp is in the transition zone (300ms before/after segment): cinematic ease in/out
  * - Otherwise: return default viewport (zoom 1.0)
  *
  * @param segments - Array of zoom segments
  * @param timestamp - Target timestamp in microseconds
  * @param cursorTrack - Cursor track for following cursor position (optional)
- * @param transitionDurationUs - Duration of ease in/out transition (default: 200ms)
+ * @param transitionDurationUs - Duration of ease in/out transition (default: 300ms for cinematic feel)
  * @returns Interpolated viewport at the given timestamp
  */
 export function interpolateViewportFromZoomSegments(
   segments: ReadonlyArray<ZoomSegment>,
   timestamp: number,
   cursorTrack: ReadonlyArray<CursorTrackPoint> = [],
-  transitionDurationUs: number = 200_000
+  transitionDurationUs: number = 300_000 // 300ms for more cinematic transitions
 ): Viewport {
   // Default viewport when no segments or outside all segments
   const defaultViewport: Viewport = {
@@ -525,16 +528,16 @@ export function interpolateViewportFromZoomSegments(
   // Check each segment
   for (const segment of segments) {
     // Get zoom center - use cursor position if available, otherwise use segment's stored position
-    // Apply smoothing by averaging nearby cursor positions
-    const zoomCenter = getSmoothedCursorPosition(cursorTrack, timestamp, segment.position);
+    // Apply cinematic smoothing by averaging nearby cursor positions with momentum
+    const zoomCenter = getCinematicCursorPosition(cursorTrack, timestamp, segment.position);
 
     // Check if we're in the ease-in zone (before segment start)
     if (timestamp >= segment.start - transitionDurationUs && timestamp < segment.start) {
-      // Ease in from 1.0 to segment zoom level
+      // Cinematic ease in from 1.0 to segment zoom level
       const t = (timestamp - (segment.start - transitionDurationUs)) / transitionDurationUs;
-      const easedT = easeInOutCubic(t);
+      const easedT = easeOutQuint(t); // Quint easing for cinematic feel
       const zoom = 1.0 + (segment.zoomLevel - 1.0) * easedT;
-      // Interpolate center from default to zoom center
+      // Interpolate center from default to zoom center with overshoot
       const center: NormalizedCoord = {
         x: 0.5 + (zoomCenter.x - 0.5) * easedT,
         y: 0.5 + (zoomCenter.y - 0.5) * easedT,
@@ -545,7 +548,7 @@ export function interpolateViewportFromZoomSegments(
       };
     }
 
-    // Check if we're inside the segment - use zoom center
+    // Check if we're inside the segment - use smooth cursor following
     if (timestamp >= segment.start && timestamp <= segment.end) {
       return {
         center: zoomCenter,
@@ -555,9 +558,9 @@ export function interpolateViewportFromZoomSegments(
 
     // Check if we're in the ease-out zone (after segment end)
     if (timestamp > segment.end && timestamp <= segment.end + transitionDurationUs) {
-      // Ease out from segment zoom level to 1.0
+      // Cinematic ease out from segment zoom level to 1.0
       const t = (timestamp - segment.end) / transitionDurationUs;
-      const easedT = easeInOutCubic(t);
+      const easedT = easeInQuint(t); // Quint easing for cinematic feel
       const zoom = segment.zoomLevel + (1.0 - segment.zoomLevel) * easedT;
       // Interpolate center from zoom center back to default
       const center: NormalizedCoord = {
@@ -575,11 +578,11 @@ export function interpolateViewportFromZoomSegments(
 }
 
 /**
- * Gets a smoothed cursor position by averaging positions over a time window.
- * This prevents sudden jumps in the zoom center.
- * Uses a larger window and more samples for smoother tracking.
+ * Gets a cinematic cursor position with smooth momentum-based tracking.
+ * Uses a combination of position averaging and velocity-based prediction
+ * for smooth, professional-looking cursor following.
  */
-function getSmoothedCursorPosition(
+function getCinematicCursorPosition(
   cursorTrack: ReadonlyArray<CursorTrackPoint>,
   timestamp: number,
   fallbackPosition: NormalizedCoord
@@ -588,49 +591,84 @@ function getSmoothedCursorPosition(
   const basePosition = getCursorPositionAtTime(cursorTrack, timestamp, fallbackPosition);
   
   // If no cursor track or very few points, just return the base position
-  if (cursorTrack.length < 3) {
+  if (cursorTrack.length < 5) {
     return basePosition;
   }
 
-  // Average positions over a 150ms window for smoother tracking
-  // This is long enough to smooth out jitter but short enough to be responsive
-  const windowUs = 150_000;
-  const positions: NormalizedCoord[] = [];
+  // Use a 200ms window for cinematic smoothing - longer for more fluid motion
+  const windowUs = 200_000;
   
   // Sample positions at regular intervals within the window
-  // Use 7 samples for better smoothing
-  const samples = 7;
+  // Use 9 samples for very smooth tracking
+  const samples = 9;
+  const positions: NormalizedCoord[] = [];
+  const weights: number[] = [];
+  
   for (let i = 0; i < samples; i++) {
-    const sampleTime = timestamp - windowUs / 2 + (windowUs * i) / (samples - 1);
+    // Sample more from the past than the future for natural lag
+    // This creates a "following" effect rather than "predicting"
+    const sampleOffset = (i / (samples - 1)) - 0.7; // Bias toward past
+    const sampleTime = timestamp + sampleOffset * windowUs;
     const pos = getCursorPositionAtTime(cursorTrack, sampleTime, fallbackPosition);
     positions.push(pos);
+    
+    // Gaussian-like weighting with bias toward current time
+    const distFromCurrent = Math.abs(sampleOffset + 0.2); // Slight bias toward recent past
+    const sigma = 0.4;
+    weights.push(Math.exp(-(distFromCurrent * distFromCurrent) / (2 * sigma * sigma)));
   }
 
-  // Calculate weighted average (center samples weighted more)
-  // Using Gaussian-like weighting for smooth falloff
+  // Calculate weighted average
   let totalWeight = 0;
   let avgX = 0;
   let avgY = 0;
   
   for (let i = 0; i < positions.length; i++) {
-    // Gaussian-like weighting: center samples have more weight
-    // sigma = 1.5 gives a nice smooth falloff
-    const distFromCenter = Math.abs(i - (samples - 1) / 2);
-    const sigma = 1.5;
-    const weight = Math.exp(-(distFromCenter * distFromCenter) / (2 * sigma * sigma));
-    avgX += positions[i].x * weight;
-    avgY += positions[i].y * weight;
-    totalWeight += weight;
+    avgX += positions[i].x * weights[i];
+    avgY += positions[i].y * weights[i];
+    totalWeight += weights[i];
   }
 
   if (totalWeight > 0) {
-    return clampPosition({
+    const smoothedPos = {
       x: avgX / totalWeight,
       y: avgY / totalWeight,
-    });
+    };
+    
+    // Apply additional momentum-based smoothing
+    // Blend between smoothed position and base position based on cursor speed
+    const speed = calculateCursorSpeed(cursorTrack, timestamp);
+    const momentumFactor = Math.min(1, speed * 2); // More smoothing at higher speeds
+    
+    const finalPos = {
+      x: smoothedPos.x * (1 - momentumFactor * 0.3) + basePosition.x * (momentumFactor * 0.3),
+      y: smoothedPos.y * (1 - momentumFactor * 0.3) + basePosition.y * (momentumFactor * 0.3),
+    };
+    
+    return clampPosition(finalPos);
   }
 
   return basePosition;
+}
+
+/**
+ * Calculates cursor speed at a given timestamp (normalized units per second).
+ */
+function calculateCursorSpeed(
+  cursorTrack: ReadonlyArray<CursorTrackPoint>,
+  timestamp: number
+): number {
+  // Find positions slightly before and after the timestamp
+  const deltaUs = 50_000; // 50ms window
+  const posBefore = getCursorPositionAtTime(cursorTrack, timestamp - deltaUs, { x: 0.5, y: 0.5 });
+  const posAfter = getCursorPositionAtTime(cursorTrack, timestamp + deltaUs, { x: 0.5, y: 0.5 });
+  
+  const dx = posAfter.x - posBefore.x;
+  const dy = posAfter.y - posBefore.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  
+  // Convert to units per second
+  return distance / (2 * deltaUs / 1_000_000);
 }
 
 /**
@@ -643,6 +681,55 @@ function easeInOutCubic(t: number): number {
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
+
+/**
+ * Quintic ease-out function for cinematic zoom-in effect.
+ * Creates a dramatic "punch in" feel with fast start and smooth settle.
+ * @param t - Progress value from 0 to 1
+ * @returns Eased value from 0 to 1
+ */
+function easeOutQuint(t: number): number {
+  return 1 - Math.pow(1 - t, 5);
+}
+
+/**
+ * Quintic ease-in function for cinematic zoom-out effect.
+ * Creates a smooth departure with gradual acceleration.
+ * @param t - Progress value from 0 to 1
+ * @returns Eased value from 0 to 1
+ */
+function easeInQuint(t: number): number {
+  return t * t * t * t * t;
+}
+
+/**
+ * Elastic ease-out for bouncy, playful zoom effects.
+ * @param t - Progress value from 0 to 1
+ * @returns Eased value from 0 to 1
+ */
+function easeOutElastic(t: number): number {
+  const c4 = (2 * Math.PI) / 3;
+  return t === 0
+    ? 0
+    : t === 1
+    ? 1
+    : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+}
+
+/**
+ * Back ease-out for slight overshoot effect.
+ * Creates anticipation and follow-through like professional video editing.
+ * @param t - Progress value from 0 to 1
+ * @returns Eased value from 0 to 1
+ */
+function easeOutBack(t: number): number {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
+// Export easing functions for potential use elsewhere
+export { easeInOutCubic, easeOutQuint, easeInQuint, easeOutElastic, easeOutBack };
 
 /**
  * Combines zoom segments with manual keyframes to get the final viewport.

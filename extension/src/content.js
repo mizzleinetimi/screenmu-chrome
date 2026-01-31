@@ -28,24 +28,46 @@
         return Math.floor((performance.now() - recordingStartTime) * 1000);
     }
 
-    // Mouse move handler (throttled)
+    // Mouse move handler - high precision tracking
     let lastMoveTime = 0;
     let lastKnownPosition = { x: 0.5, y: 0.5 };
-    const MOVE_THROTTLE = 16; // ~60fps
+    let lastRawPosition = { x: 0, y: 0 };
+    let velocityX = 0;
+    let velocityY = 0;
+    const MOVE_THROTTLE = 8; // ~120fps for smoother tracking
+    const VELOCITY_SMOOTHING = 0.3; // Exponential smoothing factor for velocity
 
     function handleMouseMove(e) {
         if (!isCapturing || isPaused) return;
 
         const now = performance.now();
-        if (now - lastMoveTime < MOVE_THROTTLE) return;
+        const timeDelta = now - lastMoveTime;
+        
+        // Higher frequency capture for more accurate tracking
+        if (timeDelta < MOVE_THROTTLE) return;
         lastMoveTime = now;
 
         const pos = normalizeCoord(e.clientX, e.clientY);
+        
+        // Calculate velocity for motion prediction
+        if (timeDelta > 0 && timeDelta < 100) {
+            const newVelX = (pos.x - lastKnownPosition.x) / (timeDelta / 1000);
+            const newVelY = (pos.y - lastKnownPosition.y) / (timeDelta / 1000);
+            // Exponential smoothing for velocity
+            velocityX = velocityX * (1 - VELOCITY_SMOOTHING) + newVelX * VELOCITY_SMOOTHING;
+            velocityY = velocityY * (1 - VELOCITY_SMOOTHING) + newVelY * VELOCITY_SMOOTHING;
+        }
+        
         lastKnownPosition = pos;
+        lastRawPosition = { x: e.clientX, y: e.clientY };
+        
         signalBuffer.push({
             type: 'MOUSE_MOVE',
             x: pos.x,
             y: pos.y,
+            // Include velocity for smoother interpolation on playback
+            velocityX: velocityX,
+            velocityY: velocityY,
             timestamp: getTimestamp(),
         });
     }
@@ -141,8 +163,11 @@
         // Record the start time so all timestamps are relative to recording start
         recordingStartTime = performance.now();
         
-        // Reset last known position to center
+        // Reset tracking state
         lastKnownPosition = { x: 0.5, y: 0.5 };
+        lastRawPosition = { x: 0, y: 0 };
+        velocityX = 0;
+        velocityY = 0;
 
         document.addEventListener('mousemove', handleMouseMove, { passive: true });
         document.addEventListener('click', handleMouseClick, { passive: true });
