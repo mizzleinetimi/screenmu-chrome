@@ -13,10 +13,10 @@ A Screen Studio-style screen recorder and editor for the web, built with a Rust/
 - 🎯 **Auto-Zoom & Cursor Following** - Intelligent zoom that follows your cursor with cinematic easing
 - 🦀 **Rust/WASM Core** - High-performance video processing engine compiled to WebAssembly
 - ⏱️ **Timeline Editor** - Trim, cut, and adjust zoom keyframes with smooth easing curves
-- � **Cinematic Effects** - Click rings, smooth transitions, and professional-looking zoom animations
+- 🎬 **Cinematic Effects** - Click rings, smooth transitions, and professional-looking zoom animations
 - 🔊 **Audio Recording** - Capture microphone audio synced with your screen recording
 - 📤 **Export** - Export polished videos with all effects applied at consistent framerates
-- � **Tab Mode** - Chrome extension captures cursor, clicks, and focus for best auto-zoom experience
+- 🔄 **Tab Mode** - Chrome extension captures cursor, clicks, and focus for best auto-zoom experience
 
 ## 🏗️ Architecture
 
@@ -32,29 +32,49 @@ A Screen Studio-style screen recorder and editor for the web, built with a Rust/
 └─────────────────────────────┘       └──────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+## 🚀 Running the App
 
-### Web App
+### Prerequisites
+
+- [Rust](https://rustup.rs/) (for building the WASM engine)
+- [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (`cargo install wasm-pack`)
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- Chrome browser (for the extension)
+
+### Step 1: Build the Rust/WASM Engine
 
 ```bash
-# Build the Rust engine
 cd engine_core
 wasm-pack build --target web
+```
 
-# Run the web app
-cd ../web
+This compiles the Rust code to WebAssembly and outputs to `engine_core/pkg/`.
+
+### Step 2: Run the Web App
+
+```bash
+cd web
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:5173 in your browser.
 
-### Chrome Extension
+### Step 3: Install the Chrome Extension (Optional)
 
-1. Open Chrome → `chrome://extensions`
-2. Enable "Developer mode"
-3. Click "Load unpacked" → select the `extension/` folder
-4. Click the ScreenMu icon to start recording
+For the best experience with cursor tracking and auto-zoom:
+
+1. Open Chrome and go to `chrome://extensions`
+2. Enable **Developer mode** (toggle in top right)
+3. Click **Load unpacked**
+4. Select the `extension/` folder from this project
+5. Click the ScreenMu extension icon to start recording
+
+### Usage
+
+1. **Record**: Click "Start Recording" to capture your screen, camera, and microphone
+2. **Edit**: After recording, use the timeline to trim, add zoom segments, and adjust effects
+3. **Export**: Click "Export" to render your polished video
 
 ## 📁 Project Structure
 
@@ -79,15 +99,13 @@ screenmu-web/
 │       ├── editing/      # UndoManager
 │       └── hooks/        # useWasmEngine, useCapture
 │
-├── extension/            # Chrome extension (MV3)
-│   ├── manifest.json
-│   ├── src/
-│   │   ├── background.js # Service worker
-│   │   ├── content.js    # Tab Mode signals
-│   │   └── offscreen.js  # MediaRecorder
-│   └── popup.html
-│
-└── steering.md           # Project guidelines
+└── extension/            # Chrome extension (MV3)
+    ├── manifest.json
+    ├── src/
+    │   ├── background.js # Service worker
+    │   ├── content.js    # Tab Mode signals
+    │   └── offscreen.js  # MediaRecorder
+    └── popup.html
 ```
 
 ## 🛠️ Tech Stack
@@ -107,10 +125,10 @@ screenmu-web/
 
 ```bash
 cd engine_core
-cargo fmt
-cargo clippy --all --tests --all-features
-cargo test
-wasm-pack build --target web
+cargo fmt                              # Format code
+cargo clippy --all --tests             # Lint
+cargo test                             # Run tests
+wasm-pack build --target web           # Build WASM
 ```
 
 ### Web App
@@ -122,16 +140,7 @@ npm run build    # Production build
 npm run test     # Run tests
 ```
 
-## 📋 Guidelines
-
-See [steering.md](steering.md) for project conventions:
-- Zero `unwrap()`/`expect()` in Rust - use proper error handling
-- Newtypes for Timestamp, FrameIndex, PixelCoord
-- No `any` or `as` casting in TypeScript
-- Typed message passing between components
-- Heavy work in workers/WASM for performance
-
-## 🎯 Key Features Implemented
+## 🎯 Key Features
 
 - **Two-phase export rendering** - Pre-renders frames then encodes at fixed framerate for smooth playback
 - **Cinematic zoom transitions** - Quintic easing for professional-looking zoom in/out
@@ -140,7 +149,7 @@ See [steering.md](steering.md) for project conventions:
 - **Timeline editing** - Trim handles, cut segments, zoom segments
 - **Undo/Redo** - Full undo manager for editing operations
 
-## � License
+## 📄 License
 
 MIT
 

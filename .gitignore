@@ -1,0 +1,17 @@
+# IDE and editor files
+.kiro/
+.vscode/
+.idea/
+
+# Project guidelines (keep local only)
+steering.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (handled by web/.gitignore)
+node_modules/
+
+# Rust target (handled by engine_core)
+target/
