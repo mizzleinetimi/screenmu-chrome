@@ -1,19 +1,24 @@
 # ScreenMu
 
-A Screen Studio-style screen recorder and editor for the web, built with a Rust/WASM core engine for auto-reframing, cursor inference, and kinetic polish.
+**#RustAfricaHackathon**
 
-> **Hackathon Disclosure**: This project was developed for a Rust hackathon. Initial scaffolding and boilerplate were generated with AI assistance. Core logic and architecture decisions were human-directed.
+A Screen Studio-style screen recorder and editor for the web, built with a Rust/WASM core engine for auto-reframing, cursor inference, and cinematic polish.
 
-## Features
+> **Hackathon Disclosure**: This project was developed for the Rust Africa Hackathon. Initial scaffolding and boilerplate were generated with AI assistance. Core logic and architecture decisions were human-directed.
 
-- 🎥 **Screen & Tab Capture** - Record your screen, window, or browser tab
-- 📷 **Camera Overlay** - Picture-in-picture webcam recording
-- 🎯 **Manual Zoom Markers** - Click or press 'Z' to mark zoom points during recording
-- 🦀 **Rust/WASM Core** - High-performance video processing engine
-- ⏱️ **Timeline Editor** - Adjust zoom keyframes with easing curves
-- 🔄 **Tab Mode** - Chrome extension captures cursor, clicks, focus for best auto-zoom
+## ✨ Features
 
-## Architecture
+- 🎥 **Screen & Tab Capture** - Record your screen, window, or browser tab with high quality
+- 📷 **Camera Overlay** - Picture-in-picture webcam recording with customizable bubble shape, size, and position
+- 🎯 **Auto-Zoom & Cursor Following** - Intelligent zoom that follows your cursor with cinematic easing
+- 🦀 **Rust/WASM Core** - High-performance video processing engine compiled to WebAssembly
+- ⏱️ **Timeline Editor** - Trim, cut, and adjust zoom keyframes with smooth easing curves
+- � **Cinematic Effects** - Click rings, smooth transitions, and professional-looking zoom animations
+- 🔊 **Audio Recording** - Capture microphone audio synced with your screen recording
+- 📤 **Export** - Export polished videos with all effects applied at consistent framerates
+- � **Tab Mode** - Chrome extension captures cursor, clicks, and focus for best auto-zoom experience
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -27,7 +32,7 @@ A Screen Studio-style screen recorder and editor for the web, built with a Rust/
 └─────────────────────────────┘       └──────────────────────────────┘
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Web App
 
@@ -51,7 +56,7 @@ Open http://localhost:5173
 3. Click "Load unpacked" → select the `extension/` folder
 4. Click the ScreenMu icon to start recording
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 screenmu-web/
@@ -62,13 +67,16 @@ screenmu-web/
 │   │   ├── cursor.rs     # Cursor tracking
 │   │   ├── focus.rs      # Focus region detection
 │   │   ├── camera.rs     # Keyframe generation
-│   │   └── effects.rs    # Click rings, highlights
+│   │   ├── effects.rs    # Click rings, highlights
+│   │   └── time_remap.rs # Speed ramps & cuts
 │   └── pkg/              # Built WASM output
 │
 ├── web/                  # React web app
 │   └── src/
 │       ├── views/        # RecordView, EditView
-│       ├── components/   # Timeline
+│       ├── components/   # Timeline, TrimHandles, ZoomSegments
+│       ├── rendering/    # Compositor, viewport, effects
+│       ├── editing/      # UndoManager
 │       └── hooks/        # useWasmEngine, useCapture
 │
 ├── extension/            # Chrome extension (MV3)
@@ -82,17 +90,18 @@ screenmu-web/
 └── steering.md           # Project guidelines
 ```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Component | Technology |
 |-----------|------------|
 | Core Engine | Rust → WebAssembly |
 | Web App | React + TypeScript + Vite |
 | Extension | Chrome Extension Manifest V3 |
-| Video | MediaRecorder, WebCodecs |
+| Video | MediaRecorder, Canvas API |
+| Testing | Vitest, Property-based testing |
 | Styling | CSS (custom design system) |
 
-## Development
+## 💻 Development
 
 ### Rust Engine
 
@@ -108,19 +117,33 @@ wasm-pack build --target web
 
 ```bash
 cd web
-npm run dev      # Development
+npm run dev      # Development server
 npm run build    # Production build
+npm run test     # Run tests
 ```
 
-## Guidelines
+## 📋 Guidelines
 
 See [steering.md](steering.md) for project conventions:
-- Zero `unwrap()`/`expect()` in Rust
+- Zero `unwrap()`/`expect()` in Rust - use proper error handling
 - Newtypes for Timestamp, FrameIndex, PixelCoord
 - No `any` or `as` casting in TypeScript
 - Typed message passing between components
-- Heavy work in workers/WASM
+- Heavy work in workers/WASM for performance
 
-## License
+## 🎯 Key Features Implemented
+
+- **Two-phase export rendering** - Pre-renders frames then encodes at fixed framerate for smooth playback
+- **Cinematic zoom transitions** - Quintic easing for professional-looking zoom in/out
+- **Cursor smoothing** - Gaussian-weighted averaging with momentum tracking
+- **Camera bubble** - Customizable PiP overlay with circle/rounded-rect shapes
+- **Timeline editing** - Trim handles, cut segments, zoom segments
+- **Undo/Redo** - Full undo manager for editing operations
+
+## � License
 
 MIT
+
+---
+
+**#RustAfricaHackathon** | Built with 🦀 Rust + ⚛️ React
