@@ -2104,7 +2104,9 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
             }
 
             // Set up MediaRecorder with canvas stream
-            const canvasStream = exportCanvas.captureStream(30);
+            // Use captureStream(0) for manual frame capture control
+            const canvasStream = exportCanvas.captureStream(0);
+            const videoTrack = canvasStream.getVideoTracks()[0];
 
             // Add audio track if available
             if (audio && project.audioBlob) {
@@ -2180,50 +2182,36 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                 });
             };
 
-            // Helper to wait for next animation frame - ensures canvas is captured
-            const waitForFrame = (): Promise<void> => {
-                return new Promise((resolve) => {
-                    requestAnimationFrame(() => {
-                        // Double RAF to ensure the frame is fully rendered and captured
-                        requestAnimationFrame(() => {
-                            resolve();
-                        });
-                    });
-                });
-            };
-
-            // Process each frame sequentially
-            // Validates: Requirements 1.1, 1.2, 2.1, 2.5, 3.1, 5.4
+            // Phase 1: Pre-render all frames to ImageData array
+            // This decouples rendering (which has variable timing due to seeks)
+            // from encoding (which needs consistent timing)
+            console.log('[EditView] Pre-rendering frames...');
+            const renderedFrames: ImageData[] = [];
+            
             for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
-                // Use source timestamp for seeking video (offset by inPoint)
                 const sourceTimestampUs = sourceTimestamps[frameIndex];
                 const sourceTimeSec = sourceTimestampUs / 1_000_000;
 
                 // Seek video to source timestamp
                 const seekResult = await waitForVideoSeek(video, sourceTimestampUs);
                 if (!seekResult.success) {
-                    console.warn(`[EditView] Seek failed for frame ${frameIndex}, using last frame`);
+                    console.warn(`[EditView] Seek failed for frame ${frameIndex}`);
                 }
 
-                // Sync camera video if available - wait for seek to complete
+                // Sync camera video if available
                 let cameraReady = false;
                 if (cameraAvailable && camera) {
                     await waitForCameraSeek(camera, sourceTimeSec);
-                    // Verify camera still has valid dimensions
                     cameraReady = camera.videoWidth > 0 && camera.videoHeight > 0;
                 }
 
                 // Get viewport by interpolating from zoom segments and keyframes
-                // Zoom segments take precedence when active, otherwise fall back to keyframes
-                // Zoom segments follow the cursor position for dynamic tracking
                 const viewport: Viewport = interpolateViewportCombined(zoomSegments, zoomMarkers, sourceTimestampUs, cursorTrack);
 
                 // Find active effects at this source timestamp
-                // Validates: Requirement 2.1
                 const activeEffects = findActiveEffects(effectTracks, sourceTimestampUs);
 
                 // Render frame using compositor with camera
-                // Validates: Requirements 1.2, 2.3, 4.1, 4.2, 4.3, 4.5
                 compositor.renderFrame(
                     video,
                     {
@@ -2236,15 +2224,42 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                     cameraReady && camera !== null ? camera : undefined
                 );
 
-                // Wait for animation frame to ensure canvas is captured properly
-                // This is more reliable than setTimeout for smooth playback
-                await waitForFrame();
+                // Capture the rendered frame as ImageData
+                renderedFrames.push(ctx.getImageData(0, 0, exportCanvas.width, exportCanvas.height));
 
-                // Update progress
-                // Validates: Requirement 5.4
-                const progress = ((frameIndex + 1) / totalFrames) * 100;
-                setExportProgress(Math.min(progress, 100));
+                // Update progress (0-50% for rendering phase)
+                setExportProgress(Math.min(((frameIndex + 1) / totalFrames) * 50, 50));
             }
+
+            console.log('[EditView] Encoding', renderedFrames.length, 'frames at fixed framerate...');
+
+            // Phase 2: Play back pre-rendered frames at fixed framerate
+            // Use precise timing to ensure consistent frame rate in output
+            const frameIntervalMs = 1000 / fps; // ~33.33ms for 30fps
+            
+            for (let frameIndex = 0; frameIndex < renderedFrames.length; frameIndex++) {
+                const frameStartTime = performance.now();
+                
+                // Draw the pre-rendered frame to canvas
+                ctx.putImageData(renderedFrames[frameIndex], 0, 0);
+                
+                // Request frame capture from the video track
+                const track = videoTrack as unknown as { requestFrame?: () => void };
+                if (track.requestFrame) {
+                    track.requestFrame();
+                }
+
+                // Update progress (50-100% for encoding phase)
+                setExportProgress(Math.min(50 + ((frameIndex + 1) / renderedFrames.length) * 50, 100));
+
+                // Wait for the exact frame interval to maintain consistent fps
+                const elapsed = performance.now() - frameStartTime;
+                const waitTime = Math.max(1, frameIntervalMs - elapsed);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+
+            // Clear pre-rendered frames to free memory
+            renderedFrames.length = 0;
 
             // Stop recording after all frames are processed
             recorder.stop();
