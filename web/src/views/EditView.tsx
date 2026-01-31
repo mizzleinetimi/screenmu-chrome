@@ -2063,6 +2063,46 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
             const effectTracks = analysisResult?.effect_tracks?.effects ?? [];
             const cursorTrack = analysisResult?.cursor_track ?? [];
 
+            // Helper function to ensure camera video is fully loaded
+            const ensureCameraReady = async (cameraEl: HTMLVideoElement): Promise<boolean> => {
+                // Check if camera has valid dimensions
+                if (cameraEl.videoWidth === 0 || cameraEl.videoHeight === 0) {
+                    console.warn('[EditView] Camera video has no dimensions');
+                    return false;
+                }
+                
+                // Wait for HAVE_ENOUGH_DATA state (readyState >= 4)
+                if (cameraEl.readyState < 4) {
+                    return new Promise((resolve) => {
+                        const onCanPlayThrough = () => {
+                            cameraEl.removeEventListener('canplaythrough', onCanPlayThrough);
+                            clearTimeout(timeoutId);
+                            resolve(true);
+                        };
+                        cameraEl.addEventListener('canplaythrough', onCanPlayThrough);
+                        // Timeout after 2 seconds
+                        const timeoutId = setTimeout(() => {
+                            cameraEl.removeEventListener('canplaythrough', onCanPlayThrough);
+                            // Still return true if we have at least HAVE_CURRENT_DATA
+                            resolve(cameraEl.readyState >= 2);
+                        }, 2000);
+                        // Trigger load if needed
+                        if (cameraEl.readyState === 0) {
+                            cameraEl.load();
+                        }
+                    });
+                }
+                return true;
+            };
+
+            // Pre-load camera video before starting export
+            let cameraAvailable = false;
+            if (camera && project.cameraBlob) {
+                console.log('[EditView] Preloading camera video for export...');
+                cameraAvailable = await ensureCameraReady(camera);
+                console.log('[EditView] Camera ready:', cameraAvailable, 'dimensions:', camera.videoWidth, 'x', camera.videoHeight);
+            }
+
             // Set up MediaRecorder with canvas stream
             const canvasStream = exportCanvas.captureStream(30);
 
@@ -2116,17 +2156,39 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                 fps
             );
 
-            // Helper function to wait for camera seek
-            const waitForCameraSeek = async (cameraEl: HTMLVideoElement, timeSeconds: number): Promise<void> => {
+            // Helper function to wait for camera seek with proper event handling
+            const waitForCameraSeek = async (cameraEl: HTMLVideoElement, timeSeconds: number): Promise<boolean> => {
                 return new Promise((resolve) => {
+                    // If already at the right time, resolve immediately
+                    if (Math.abs(cameraEl.currentTime - timeSeconds) < 0.05) {
+                        resolve(true);
+                        return;
+                    }
+                    
                     const onSeeked = () => {
                         cameraEl.removeEventListener('seeked', onSeeked);
-                        resolve();
+                        clearTimeout(timeoutId);
+                        resolve(true);
                     };
                     cameraEl.addEventListener('seeked', onSeeked);
                     cameraEl.currentTime = timeSeconds;
-                    // Timeout fallback in case seeked event doesn't fire
-                    setTimeout(resolve, 100);
+                    // Longer timeout for camera seek (500ms)
+                    const timeoutId = setTimeout(() => {
+                        cameraEl.removeEventListener('seeked', onSeeked);
+                        resolve(true); // Still proceed even if timeout
+                    }, 500);
+                });
+            };
+
+            // Helper to wait for next animation frame - ensures canvas is captured
+            const waitForFrame = (): Promise<void> => {
+                return new Promise((resolve) => {
+                    requestAnimationFrame(() => {
+                        // Double RAF to ensure the frame is fully rendered and captured
+                        requestAnimationFrame(() => {
+                            resolve();
+                        });
+                    });
                 });
             };
 
@@ -2145,9 +2207,10 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
 
                 // Sync camera video if available - wait for seek to complete
                 let cameraReady = false;
-                if (camera && project.cameraBlob && camera.readyState >= 2) {
+                if (cameraAvailable && camera) {
                     await waitForCameraSeek(camera, sourceTimeSec);
-                    cameraReady = true;
+                    // Verify camera still has valid dimensions
+                    cameraReady = camera.videoWidth > 0 && camera.videoHeight > 0;
                 }
 
                 // Get viewport by interpolating from zoom segments and keyframes
@@ -2170,12 +2233,12 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                         cursorPosition: null,
                         cursorOpacity: 0,
                     },
-                    cameraReady && camera ? camera : undefined
+                    cameraReady && camera !== null ? camera : undefined
                 );
 
-                // Small delay to allow canvas stream to capture the frame
-                // This prevents lag and ensures smooth playback
-                await new Promise(resolve => setTimeout(resolve, 16));
+                // Wait for animation frame to ensure canvas is captured properly
+                // This is more reliable than setTimeout for smooth playback
+                await waitForFrame();
 
                 // Update progress
                 // Validates: Requirement 5.4
