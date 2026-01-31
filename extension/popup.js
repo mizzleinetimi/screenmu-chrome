@@ -1,16 +1,34 @@
 // Popup script for ScreenMu extension
 // LLM-assisted: initial scaffold generated with AI assistance per hackathon disclosure rules.
 
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const openBtn = document.getElementById('openBtn');
-const statusText = document.getElementById('status-text');
-const durationRow = document.getElementById('duration-row');
-const durationEl = document.getElementById('duration');
-const signalsRow = document.getElementById('signals-row');
-const signalsEl = document.getElementById('signals');
+// Views
+const idleView = document.getElementById('idle-view');
+const recordingView = document.getElementById('recording-view');
+const stoppedView = document.getElementById('stopped-view');
 
+// Idle view elements
+const startBtn = document.getElementById('startBtn');
+const micToggle = document.getElementById('micToggle');
+const cameraToggle = document.getElementById('cameraToggle');
+
+// Recording view elements
+const timerDisplay = document.getElementById('timerDisplay');
+const signalCount = document.getElementById('signalCount');
+const pauseBtn = document.getElementById('pauseBtn');
+const stopBtn = document.getElementById('stopBtn');
+const recordingDot = document.getElementById('recordingDot');
+const recordingLabel = document.getElementById('recordingLabel');
+
+// Stopped view elements
+const openBtn = document.getElementById('openBtn');
+const finalDuration = document.getElementById('finalDuration');
+
+// Error display
+const errorMsg = document.getElementById('error-msg');
+
+// State
 let statusInterval = null;
+let isPaused = false;
 
 // Format duration as MM:SS
 function formatDuration(ms) {
@@ -20,28 +38,34 @@ function formatDuration(ms) {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-// Update UI based on current status
-function updateUI(status) {
-    if (status.isRecording) {
-        startBtn.style.display = 'none';
-        stopBtn.style.display = 'block';
-        openBtn.style.display = 'none';
-        durationRow.style.display = 'flex';
-        signalsRow.style.display = 'flex';
+// Show error message
+function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+    setTimeout(() => {
+        errorMsg.style.display = 'none';
+    }, 5000);
+}
 
-        statusText.innerHTML = '<span class="recording-indicator"><span class="recording-dot"></span>Recording</span>';
-        durationEl.textContent = formatDuration(status.duration);
-        signalsEl.textContent = status.signalCount || 0;
-    } else {
-        startBtn.style.display = 'block';
-        stopBtn.style.display = 'none';
-        durationRow.style.display = 'none';
-        signalsRow.style.display = 'none';
-        statusText.textContent = 'Ready';
+// Switch between views
+function showView(view) {
+    idleView.classList.add('hidden');
+    recordingView.classList.add('hidden');
+    stoppedView.classList.add('hidden');
 
-        // Show open button if we have a recording in memory
-        // For now, we only show it immediately after stop in the handler
+    if (view === 'idle') {
+        idleView.classList.remove('hidden');
+    } else if (view === 'recording') {
+        recordingView.classList.remove('hidden');
+    } else if (view === 'stopped') {
+        stoppedView.classList.remove('hidden');
     }
+}
+
+// Update recording UI
+function updateRecordingUI(status) {
+    timerDisplay.textContent = formatDuration(status.duration);
+    signalCount.textContent = `${status.signalCount || 0} signals captured`;
 }
 
 // Get current status
@@ -49,11 +73,20 @@ async function getStatus() {
     try {
         const response = await chrome.runtime.sendMessage({ type: 'GET_STATUS' });
         if (response) {
-            updateUI(response);
+            if (response.isRecording) {
+                showView('recording');
+                updateRecordingUI(response);
 
-            // If recording, ensure we're polling
-            if (response.isRecording && !statusInterval) {
-                statusInterval = setInterval(getStatus, 500);
+                // Ensure we're polling
+                if (!statusInterval) {
+                    statusInterval = setInterval(getStatus, 200);
+                }
+            } else {
+                // Not recording - check if we have a recording to open
+                if (statusInterval) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+                }
             }
         }
     } catch (err) {
@@ -61,29 +94,105 @@ async function getStatus() {
     }
 }
 
+// Request permissions and start recording
+async function requestPermissionsAndStart() {
+    const wantsMic = micToggle.checked;
+    const wantsCamera = cameraToggle.checked;
+
+    let hasMic = false;
+    let hasCamera = false;
+
+    // Request microphone permission if toggled
+    if (wantsMic) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
+            hasMic = true;
+            console.log('[Popup] Microphone permission granted');
+        } catch (err) {
+            console.log('[Popup] Microphone permission denied:', err.message);
+            showError('Microphone access denied');
+        }
+    }
+
+    // Request camera permission if toggled
+    if (wantsCamera) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(t => t.stop());
+            hasCamera = true;
+            console.log('[Popup] Camera permission granted');
+        } catch (err) {
+            console.log('[Popup] Camera permission denied:', err.message);
+            showError('Camera access denied');
+        }
+    }
+
+    return { hasMic, hasCamera };
+}
+
 // Start recording
 startBtn.addEventListener('click', async () => {
     startBtn.disabled = true;
-    statusText.textContent = 'Starting...';
+    startBtn.textContent = 'Starting...';
 
     try {
-        await chrome.runtime.sendMessage({ type: 'START_TAB_CAPTURE' });
+        // Request permissions directly in popup
+        const permissions = await requestPermissionsAndStart();
+
+        // Send to background with permission flags
+        const response = await chrome.runtime.sendMessage({
+            type: 'START_TAB_CAPTURE_DIRECT',
+            options: permissions
+        });
+
+        if (!response.success) {
+            throw new Error(response.error || 'Failed to start recording');
+        }
+
+        // Switch to recording view
+        isPaused = false;
+        showView('recording');
 
         // Start polling status
-        if (!statusInterval) {
-            statusInterval = setInterval(getStatus, 500);
-        }
+        statusInterval = setInterval(getStatus, 200);
         getStatus();
     } catch (err) {
-        statusText.textContent = 'Error: ' + err.message;
+        showError(err.message);
         startBtn.disabled = false;
+        startBtn.textContent = 'Start Recording';
+    }
+});
+
+// Pause/Resume recording
+pauseBtn.addEventListener('click', async () => {
+    try {
+        if (isPaused) {
+            // Resume
+            await chrome.runtime.sendMessage({ type: 'RESUME_CAPTURE' });
+            isPaused = false;
+            pauseBtn.textContent = '⏸';
+            pauseBtn.title = 'Pause';
+            recordingDot.classList.remove('paused');
+            recordingLabel.textContent = 'Recording';
+        } else {
+            // Pause
+            await chrome.runtime.sendMessage({ type: 'PAUSE_CAPTURE' });
+            isPaused = true;
+            pauseBtn.textContent = '▶';
+            pauseBtn.title = 'Resume';
+            recordingDot.classList.add('paused');
+            recordingLabel.textContent = 'Paused';
+        }
+    } catch (err) {
+        showError(err.message);
     }
 });
 
 // Stop recording
 stopBtn.addEventListener('click', async () => {
     stopBtn.disabled = true;
-    statusText.textContent = 'Stopping...';
+    stopBtn.textContent = 'Stopping...';
 
     try {
         if (statusInterval) {
@@ -93,33 +202,38 @@ stopBtn.addEventListener('click', async () => {
 
         const result = await chrome.runtime.sendMessage({ type: 'STOP_CAPTURE' });
 
-        statusText.textContent = 'Recording saved!';
+        // Show final duration
+        finalDuration.textContent = formatDuration(result.duration || 0);
+        showView('stopped');
 
-        // Reset UI after a moment
-        setTimeout(() => {
-            updateUI({ isRecording: false });
-            stopBtn.disabled = false;
+        // Auto-open editor after a brief moment
+        setTimeout(async () => {
+            try {
+                await chrome.runtime.sendMessage({ type: 'OPEN_EDITOR' });
+                window.close();
+            } catch (err) {
+                console.error('Failed to open editor:', err);
+                // Still show the stopped view so user can manually click
+            }
+        }, 500);
 
-            // Show open button
-            startBtn.style.display = 'none';
-            openBtn.style.display = 'block';
-        }, 1000);
     } catch (err) {
-        statusText.textContent = 'Error: ' + err.message;
+        showError(err.message);
         stopBtn.disabled = false;
+        stopBtn.textContent = '⏹ Stop';
     }
 });
 
-// Open in Editor
+// Open in Editor (manual fallback)
 openBtn.addEventListener('click', async () => {
     openBtn.disabled = true;
     openBtn.textContent = 'Opening...';
 
     try {
         await chrome.runtime.sendMessage({ type: 'OPEN_EDITOR' });
-        window.close(); // Close popup
+        window.close();
     } catch (err) {
-        statusText.textContent = 'Error: ' + err.message;
+        showError(err.message);
         openBtn.disabled = false;
         openBtn.textContent = 'Open in Editor';
     }

@@ -9,6 +9,9 @@ let screenChunks = [];
 let micChunks = [];
 let cameraChunks = [];
 
+// Timestamp tracking for synchronization
+let recordingStartTime = 0;
+
 // Listen for messages from background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.target !== 'offscreen') return;
@@ -81,7 +84,53 @@ async function startRecording(streamId, options = {}) {
     micChunks = [];
     cameraChunks = [];
 
-    // Start screen recording
+    // Prepare all streams BEFORE starting any recorders
+    // This minimizes the time gap between recorder starts
+    let micStream = null;
+    let cameraStream = null;
+
+    // Get microphone stream if permission was granted
+    if (options.hasMic) {
+        try {
+            // Use higher quality audio settings for clearer capture
+            // Disable processing that can degrade quality for voiceover-style recording
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    // Higher sample rate for better quality
+                    sampleRate: { ideal: 48000 },
+                    sampleSize: { ideal: 16 },
+                    channelCount: { ideal: 1 },
+                    // Disable processing for cleaner audio
+                    // These can cause artifacts and reduce clarity
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                }
+            });
+            console.log('[ScreenMu Offscreen] Microphone stream acquired');
+        } catch (err) {
+            console.warn('[ScreenMu Offscreen] Microphone access failed:', err);
+        }
+    }
+
+    // Get camera stream if permission was granted
+    if (options.hasCamera) {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    frameRate: { ideal: 30 },
+                    facingMode: 'user',
+                }
+            });
+            console.log('[ScreenMu Offscreen] Camera stream acquired');
+        } catch (err) {
+            console.warn('[ScreenMu Offscreen] Camera access failed:', err);
+        }
+    }
+
+    // Create all recorders
     screenRecorder = new MediaRecorder(tabStream, {
         mimeType: 'video/webm;codecs=vp9',
         videoBitsPerSecond: 5000000,
@@ -93,21 +142,11 @@ async function startRecording(streamId, options = {}) {
         }
     };
 
-    screenRecorder.start(100);
-    console.log('[ScreenMu Offscreen] Screen recording started');
-
-    // Try to start microphone recording
-    try {
-        const micStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-            }
-        });
-
+    if (micStream) {
+        // Use higher bitrate for better audio quality
         micRecorder = new MediaRecorder(micStream, {
             mimeType: 'audio/webm;codecs=opus',
+            audioBitsPerSecond: 128000, // 128kbps for good quality
         });
 
         micRecorder.ondataavailable = (e) => {
@@ -115,24 +154,9 @@ async function startRecording(streamId, options = {}) {
                 micChunks.push(e.data);
             }
         };
-
-        micRecorder.start(100);
-        console.log('[ScreenMu Offscreen] Microphone recording started');
-    } catch (err) {
-        console.warn('[ScreenMu Offscreen] Microphone access denied or failed:', err);
-        // Continue without mic
     }
 
-    // Try to start camera recording
-    try {
-        const cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'user',
-            }
-        });
-
+    if (cameraStream) {
         cameraRecorder = new MediaRecorder(cameraStream, {
             mimeType: 'video/webm;codecs=vp9',
             videoBitsPerSecond: 2000000,
@@ -143,13 +167,23 @@ async function startRecording(streamId, options = {}) {
                 cameraChunks.push(e.data);
             }
         };
-
-        cameraRecorder.start(100);
-        console.log('[ScreenMu Offscreen] Camera recording started');
-    } catch (err) {
-        console.warn('[ScreenMu Offscreen] Camera access denied or failed:', err);
-        // Continue without camera
     }
+
+    // Start all recorders at the same time for better sync
+    // Use a common reference timestamp
+    recordingStartTime = performance.now();
+    
+    // Start all recorders in quick succession
+    // The timeslice of 100ms means data is collected frequently for smoother playback
+    screenRecorder.start(100);
+    if (micRecorder) {
+        micRecorder.start(100);
+    }
+    if (cameraRecorder) {
+        cameraRecorder.start(100);
+    }
+
+    console.log('[ScreenMu Offscreen] All recorders started at:', recordingStartTime);
 }
 
 async function stopRecording() {

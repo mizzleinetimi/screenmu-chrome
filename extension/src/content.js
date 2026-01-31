@@ -9,32 +9,39 @@
     const signalBuffer = [];
     const BATCH_INTERVAL = 100; // ms
     let isCapturing = false;
+    let isPaused = false;
+    let batchInterval = null;
+    
+    // Recording start time - used to normalize timestamps to start from 0
+    let recordingStartTime = 0;
 
-    // Normalize coordinates to 0-1 range
+    // Normalize coordinates to 0-1 range, clamped to valid bounds
     function normalizeCoord(x, y) {
         return {
-            x: x / window.innerWidth,
-            y: y / window.innerHeight,
+            x: Math.max(0, Math.min(1, x / window.innerWidth)),
+            y: Math.max(0, Math.min(1, y / window.innerHeight)),
         };
     }
 
-    // Get timestamp in microseconds
+    // Get timestamp in microseconds, relative to recording start
     function getTimestamp() {
-        return Math.floor(performance.now() * 1000);
+        return Math.floor((performance.now() - recordingStartTime) * 1000);
     }
 
     // Mouse move handler (throttled)
     let lastMoveTime = 0;
+    let lastKnownPosition = { x: 0.5, y: 0.5 };
     const MOVE_THROTTLE = 16; // ~60fps
 
     function handleMouseMove(e) {
-        if (!isCapturing) return;
+        if (!isCapturing || isPaused) return;
 
         const now = performance.now();
         if (now - lastMoveTime < MOVE_THROTTLE) return;
         lastMoveTime = now;
 
         const pos = normalizeCoord(e.clientX, e.clientY);
+        lastKnownPosition = pos;
         signalBuffer.push({
             type: 'MOUSE_MOVE',
             x: pos.x,
@@ -43,9 +50,37 @@
         });
     }
 
+    // Mouse leave handler - track when cursor leaves the window
+    function handleMouseLeave(e) {
+        if (!isCapturing || isPaused) return;
+        
+        // Record the last known position when cursor leaves
+        // This helps prevent glitches when cursor re-enters
+        signalBuffer.push({
+            type: 'MOUSE_LEAVE',
+            x: lastKnownPosition.x,
+            y: lastKnownPosition.y,
+            timestamp: getTimestamp(),
+        });
+    }
+
+    // Mouse enter handler - track when cursor re-enters the window
+    function handleMouseEnter(e) {
+        if (!isCapturing || isPaused) return;
+        
+        const pos = normalizeCoord(e.clientX, e.clientY);
+        lastKnownPosition = pos;
+        signalBuffer.push({
+            type: 'MOUSE_ENTER',
+            x: pos.x,
+            y: pos.y,
+            timestamp: getTimestamp(),
+        });
+    }
+
     // Mouse click handler
     function handleMouseClick(e) {
-        if (!isCapturing) return;
+        if (!isCapturing || isPaused) return;
 
         const pos = normalizeCoord(e.clientX, e.clientY);
         signalBuffer.push({
@@ -59,7 +94,7 @@
 
     // Focus change handler
     function handleFocusChange(e) {
-        if (!isCapturing) return;
+        if (!isCapturing || isPaused) return;
         if (!e.target || !e.target.getBoundingClientRect) return;
 
         const rect = e.target.getBoundingClientRect();
@@ -77,7 +112,7 @@
 
     // Scroll handler
     function handleScroll(e) {
-        if (!isCapturing) return;
+        if (!isCapturing || isPaused) return;
 
         signalBuffer.push({
             type: 'SCROLL',
@@ -101,27 +136,57 @@
     function startCapture() {
         if (isCapturing) return;
         isCapturing = true;
+        isPaused = false;
+        
+        // Record the start time so all timestamps are relative to recording start
+        recordingStartTime = performance.now();
+        
+        // Reset last known position to center
+        lastKnownPosition = { x: 0.5, y: 0.5 };
 
         document.addEventListener('mousemove', handleMouseMove, { passive: true });
         document.addEventListener('click', handleMouseClick, { passive: true });
         document.addEventListener('focus', handleFocusChange, { capture: true, passive: true });
         document.addEventListener('wheel', handleScroll, { passive: true });
+        document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+        document.addEventListener('mouseenter', handleMouseEnter, { passive: true });
 
         // Start batch timer
-        setInterval(flushBuffer, BATCH_INTERVAL);
+        batchInterval = setInterval(flushBuffer, BATCH_INTERVAL);
 
-        console.log('[ScreenMu] Tab Mode capture started');
+        console.log('[ScreenMu] Tab Mode capture started at:', recordingStartTime);
+    }
+
+    // Pause capturing
+    function pauseCapture() {
+        isPaused = true;
+        console.log('[ScreenMu] Tab Mode capture paused');
+    }
+
+    // Resume capturing
+    function resumeCapture() {
+        isPaused = false;
+        console.log('[ScreenMu] Tab Mode capture resumed');
     }
 
     // Stop capturing
     function stopCapture() {
         if (!isCapturing) return;
         isCapturing = false;
+        isPaused = false;
 
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('click', handleMouseClick);
         document.removeEventListener('focus', handleFocusChange, { capture: true });
         document.removeEventListener('wheel', handleScroll);
+        document.removeEventListener('mouseleave', handleMouseLeave);
+        document.removeEventListener('mouseenter', handleMouseEnter);
+
+        // Clear batch timer
+        if (batchInterval) {
+            clearInterval(batchInterval);
+            batchInterval = null;
+        }
 
         // Flush remaining signals
         flushBuffer();
@@ -132,8 +197,20 @@
     // Listen for messages from background
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         switch (message.type) {
+            case 'PING':
+                // Health check from background script
+                sendResponse({ success: true, ready: true });
+                break;
             case 'START_CAPTURE':
                 startCapture();
+                sendResponse({ success: true });
+                break;
+            case 'PAUSE_CAPTURE':
+                pauseCapture();
+                sendResponse({ success: true });
+                break;
+            case 'RESUME_CAPTURE':
+                resumeCapture();
                 sendResponse({ success: true });
                 break;
             case 'STOP_CAPTURE':

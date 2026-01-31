@@ -140,6 +140,9 @@ export interface Project {
     editSettings: EditSettings;
 }
 
+/** Camera bubble shape options */
+export type CameraBubbleShape = 'circle' | 'rounded-rect';
+
 /** Edit settings */
 export interface EditSettings {
     zoomStrength: number;
@@ -147,6 +150,42 @@ export interface EditSettings {
     theme: 'light' | 'dark';
     clickRings: boolean;
     cursorHighlight: boolean;
+    // Phase 2 additions
+    backgroundGradient: string;  // Gradient preset ID
+    screenCornerRadius: number;  // Default 12
+    screenShadowEnabled: boolean;  // Default true
+    screenShadowBlur: number;  // Default 32
+    deviceFrame: 'none' | 'browser' | 'macbook';  // Default 'none' - Requirement 3.7
+    // Camera bubble settings - Requirements 4.1, 4.3, 4.8
+    cameraBubblePosition: NormalizedCoord;  // Center position (0-1)
+    cameraBubbleSize: number;  // Diameter/width as fraction of canvas (0.1-0.4)
+    cameraBubbleShape: CameraBubbleShape;  // Default 'circle'
+    cameraBubbleBorderWidth: number;  // Default 3
+    cameraBubbleBorderColor: string;  // Default '#ffffff'
+    cameraBackgroundBlur: number;  // 0 = disabled, 1-20 = blur radius
+    // Phase 3 additions - Trim functionality (Requirements 2.2, 2.3)
+    inPoint: number;  // Start trim point in microseconds, default 0
+    outPoint: number;  // End trim point in microseconds, default duration
+    // Phase 3 additions - Cut segments (Requirement 3.1)
+    cuts: TimeRange[];  // Array of cut segments (removed ranges)
+    // Phase 3 additions - Speed ramps (Requirements 4.1, 4.2, 4.3)
+    speedRamps: SpeedRamp[];  // Array of speed ramp segments
+}
+
+/** Time range for cut segments */
+export interface TimeRange {
+    /** Start time in microseconds */
+    start: number;
+    /** End time in microseconds */
+    end: number;
+}
+
+/** Speed ramp segment for timeline speed changes */
+export interface SpeedRamp {
+    /** Time range for the speed ramp */
+    range: TimeRange;
+    /** Speed multiplier (0.25 to 4.0) */
+    speed: number;
 }
 
 /** Zoom marker (manual marking) */
@@ -155,6 +194,19 @@ export interface ZoomMarker {
     timestamp: number; // microseconds
     position: NormalizedCoord;
     zoomLevel: number; // 1.0 = no zoom
+}
+
+/** Zoom segment - a time range where zoom is applied, then returns to normal */
+export interface ZoomSegment {
+    id: string;
+    /** Start time of the zoom in microseconds */
+    start: number;
+    /** End time of the zoom in microseconds */
+    end: number;
+    /** Zoom level during this segment (1.0 = no zoom, 2.0 = 2x zoom) */
+    zoomLevel: number;
+    /** Center position for the zoom (normalized 0-1) */
+    position: NormalizedCoord;
 }
 
 // ============================================================================

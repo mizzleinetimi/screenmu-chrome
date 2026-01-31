@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useCapture } from '../hooks/useCapture';
 import type { CaptureMode, NormalizedCoord, Project, SignalBatch } from '../types';
+import { DEFAULT_GRADIENT_PRESET_ID } from '../rendering/background';
 import '../styles/RecordView.css';
 
 interface RecordViewProps {
@@ -81,6 +82,25 @@ export function RecordView({ onRecordingComplete }: RecordViewProps) {
                 theme: 'dark',
                 clickRings: true,
                 cursorHighlight: true,
+                backgroundGradient: DEFAULT_GRADIENT_PRESET_ID,
+                screenCornerRadius: 12,
+                screenShadowEnabled: true,
+                screenShadowBlur: 32,
+                deviceFrame: 'none',
+                // Camera bubble defaults - Requirements 4.1, 4.3
+                cameraBubblePosition: { x: 0.9, y: 0.85 },
+                cameraBubbleSize: 0.2,
+                cameraBubbleShape: 'circle',
+                cameraBubbleBorderWidth: 3,
+                cameraBubbleBorderColor: '#ffffff',
+                cameraBackgroundBlur: 0,
+                // Trim defaults - Requirements 2.2, 2.3
+                inPoint: 0,
+                outPoint: state.duration * 1000, // to microseconds
+                // Cut segments defaults - Requirement 3.1
+                cuts: [],
+                // Speed ramps defaults - Requirements 4.1, 4.2, 4.3
+                speedRamps: [],
             },
         };
 

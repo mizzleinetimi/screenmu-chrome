@@ -1,0 +1,172 @@
+/* TrimHandles Styles */
+/* Validates: Requirements 2.1, 2.4 - Trim handles and visual indication of trimmed regions */
+
+.trim-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+/* Allow pointer events on handles */
+.trim-handles.dragging {
+    pointer-events: auto;
+    cursor: ew-resize;
+}
+
+/* Trimmed region overlays (dimmed areas) */
+/* Validates: Requirement 2.4 - Visual indication of trimmed regions */
+.trim-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.trim-region-start {
+    left: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.trim-region-end {
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Trim handle base styles */
+/* Validates: Requirement 2.1 - Display trim handles at start and end */
+.trim-handle {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 16px;
+    transform: translateX(-50%);
+    cursor: ew-resize;
+    pointer-events: auto;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.trim-handle:hover,
+.trim-handle.dragging {
+    z-index: 11;
+}
+
+/* Vertical bar of the handle */
+.trim-handle-bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--color-warning, #f59e0b);
+    border-radius: 2px;
+    transition: background-color 0.15s ease, width 0.15s ease;
+}
+
+.trim-handle:hover .trim-handle-bar,
+.trim-handle.dragging .trim-handle-bar {
+    background: var(--color-primary, #6366f1);
+    width: 5px;
+}
+
+/* Grip indicator (visual affordance for dragging) */
+.trim-handle-grip {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 2px;
+    background: var(--color-warning, #f59e0b);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.trim-handle:hover .trim-handle-grip,
+.trim-handle.dragging .trim-handle-grip {
+    opacity: 1;
+    background: var(--color-primary, #6366f1);
+}
+
+.grip-line {
+    width: 8px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 1px;
+}
+
+/* In point handle specific styles */
+.trim-handle-in {
+    /* Slightly offset to the right so handle is visible at 0% */
+}
+
+.trim-handle-in .trim-handle-bar {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+/* Out point handle specific styles */
+.trim-handle-out {
+    /* Slightly offset to the left so handle is visible at 100% */
+}
+
+.trim-handle-out .trim-handle-bar {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+/* Active region indicator (the non-trimmed area) */
+.trim-active-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+    border-top: 2px solid var(--color-success, #10b981);
+    border-bottom: 2px solid var(--color-success, #10b981);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+}
+
+/* Dragging state styles */
+.trim-handle.dragging .trim-handle-bar {
+    background: var(--color-primary, #6366f1);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.trim-handle.dragging .trim-handle-grip {
+    background: var(--color-primary, #6366f1);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* Tooltip-like time display on hover/drag */
+.trim-handle::before {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: var(--color-surface-elevated, #374151);
+    color: var(--color-text, white);
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 20;
+}
+
+.trim-handle:hover::before,
+.trim-handle.dragging::before {
+    opacity: 1;
+}

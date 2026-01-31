@@ -53,6 +53,12 @@
     transform: translate(-50%, -50%);
     cursor: pointer;
     z-index: 1;
+    user-select: none;
+}
+
+.timeline-marker.dragging {
+    cursor: grabbing;
+    z-index: 3;
 }
 
 .marker-dot {
@@ -64,11 +70,26 @@
     transition: all 0.15s ease;
 }
 
-.timeline-marker:hover .marker-dot,
+.timeline-marker:hover .marker-dot {
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    cursor: grab;
+}
+
 .timeline-marker.selected .marker-dot {
     width: 16px;
     height: 16px;
     background: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb, 59, 130, 246), 0.3);
+}
+
+.timeline-marker.dragging .marker-dot {
+    width: 18px;
+    height: 18px;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 59, 130, 246), 0.4);
+    cursor: grabbing;
 }
 
 .marker-label {
@@ -82,9 +103,16 @@
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.15s ease;
+    pointer-events: none;
 }
 
 .timeline-marker:hover .marker-label,
-.timeline-marker.selected .marker-label {
+.timeline-marker.selected .marker-label,
+.timeline-marker.dragging .marker-label {
     opacity: 1;
+}
+
+/* Track styling during drag */
+.timeline-track.dragging {
+    cursor: grabbing;
 }

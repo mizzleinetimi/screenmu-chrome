@@ -49,6 +49,21 @@
     gap: 12px;
 }
 
+.export-progress {
+    width: 100%;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.export-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
 .btn-export {
     width: 100%;
     padding: 14px 20px;
@@ -322,4 +337,621 @@
     object-fit: cover;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     background: #000;
+}
+
+
+/* Keyframe Editor Panel - Requirements 1.3, 1.4, 1.6 */
+.keyframe-editor {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.keyframe-editor h3 {
+    color: #6366f1;
+    margin-bottom: 12px;
+}
+
+/* Keyframe Properties Display - Requirement 1.3 */
+.keyframe-properties {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.property-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.property-row:last-child {
+    border-bottom: none;
+}
+
+.property-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.property-value {
+    font-size: 13px;
+    color: #374151;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+/* Keyframe Control - Requirement 1.4 */
+.keyframe-control {
+    margin-bottom: 16px;
+}
+
+.keyframe-control label {
+    display: block;
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.keyframe-control label strong {
+    color: #6366f1;
+}
+
+.slider-with-labels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slider-label-min,
+.slider-label-max {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+    min-width: 24px;
+}
+
+.slider-label-min {
+    text-align: right;
+}
+
+.slider-label-max {
+    text-align: left;
+}
+
+.zoom-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(90deg, #e5e7eb, #6366f1);
+    border-radius: 3px;
+    outline: none;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.zoom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.zoom-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+/* Delete Keyframe Button - Requirement 1.6 */
+.btn-delete-keyframe {
+    width: 100%;
+    padding: 10px 16px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-delete-keyframe:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+}
+
+.btn-delete-keyframe:active {
+    transform: translateY(0);
+}
+
+
+/* Trim Controls - Requirement 2.7 */
+.trim-info {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-reset-trim {
+    width: 100%;
+    padding: 10px 16px;
+    background: #f0f9ff;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-reset-trim:hover:not(:disabled) {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    transform: translateY(-1px);
+}
+
+.btn-reset-trim:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-reset-trim:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* Cut Controls - Requirement 3.1 */
+.cut-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-cut-action {
+    width: 100%;
+    padding: 10px 16px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-cut-action:hover:not(:disabled) {
+    background: #fde68a;
+    border-color: #f59e0b;
+    transform: translateY(-1px);
+}
+
+.btn-cut-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-cut-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-cut-action.btn-cut-out {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.btn-cut-action.btn-cut-out:hover:not(:disabled) {
+    background: #bbf7d0;
+    border-color: #4ade80;
+}
+
+.btn-cut-action.btn-cancel {
+    background: #f3f4f6;
+    color: #6b7280;
+    border-color: #d1d5db;
+}
+
+.btn-cut-action.btn-cancel:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.cut-in-progress {
+    background: #fef3c7;
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid #fcd34d;
+}
+
+.cut-action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.cut-action-buttons .btn-cut-action {
+    flex: 1;
+}
+
+/* Cut segments list */
+.cuts-list {
+    margin-top: 8px;
+}
+
+.cut-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cut-list-item:hover {
+    background: #ffedd5;
+    border-color: #fdba74;
+}
+
+.cut-list-item.selected {
+    background: #fed7aa;
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.cut-icon {
+    font-size: 14px;
+}
+
+.cut-range {
+    font-size: 13px;
+    font-family: monospace;
+    color: #9a3412;
+}
+
+/* Remove cut button */
+.btn-remove-cut {
+    width: 100%;
+    padding: 10px 16px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-remove-cut:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+}
+
+.btn-remove-cut:active {
+    transform: translateY(0);
+}
+
+
+/* Speed Ramp Controls - Requirements 4.1, 4.2, 4.3 */
+.speed-ramp-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.speed-preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.speed-preset-btn {
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.speed-preset-btn:hover {
+    background: #e5e7eb;
+}
+
+.speed-preset-btn.selected {
+    background: #8b5cf6;
+    color: white;
+    border-color: #8b5cf6;
+}
+
+.speed-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 3px;
+    outline: none;
+}
+
+.speed-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #8b5cf6;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.speed-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.speed-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #8b5cf6;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ramp-action {
+    width: 100%;
+    padding: 10px 16px;
+    background: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #c4b5fd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-ramp-action:hover:not(:disabled) {
+    background: #ddd6fe;
+    border-color: #a78bfa;
+    transform: translateY(-1px);
+}
+
+.btn-ramp-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-ramp-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-ramp-action.btn-ramp-end {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.btn-ramp-action.btn-ramp-end:hover:not(:disabled) {
+    background: #bbf7d0;
+    border-color: #4ade80;
+}
+
+.btn-ramp-action.btn-cancel {
+    background: #f3f4f6;
+    color: #6b7280;
+    border-color: #d1d5db;
+}
+
+.btn-ramp-action.btn-cancel:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.ramp-in-progress {
+    background: #ede9fe;
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid #c4b5fd;
+}
+
+.ramp-action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.ramp-action-buttons .btn-ramp-action {
+    flex: 1;
+}
+
+/* Speed ramps list */
+.ramps-list {
+    margin-top: 8px;
+}
+
+.ramp-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 6px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ramp-list-item:hover {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+}
+
+.ramp-list-item.selected {
+    background: #ddd6fe;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.ramp-list-item.slow {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.ramp-list-item.slow:hover {
+    background: #bfdbfe;
+    border-color: #60a5fa;
+}
+
+.ramp-list-item.slow.selected {
+    background: #93c5fd;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.ramp-icon {
+    font-size: 14px;
+}
+
+.ramp-speed {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6d28d9;
+    min-width: 50px;
+}
+
+.ramp-list-item.slow .ramp-speed {
+    color: #1d4ed8;
+}
+
+.ramp-range {
+    font-size: 12px;
+    font-family: monospace;
+    color: #6b7280;
+}
+
+/* Selected speed ramp editor */
+.selected-ramp-editor {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Remove speed ramp button */
+.btn-remove-ramp {
+    width: 100%;
+    padding: 10px 16px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-remove-ramp:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+}
+
+.btn-remove-ramp:active {
+    transform: translateY(0);
+}
+
+
+/* Undo/Redo Buttons - Requirement 5.6 */
+.btn-timeline.btn-undo,
+.btn-timeline.btn-redo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.btn-timeline.btn-undo:disabled,
+.btn-timeline.btn-redo:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+}
+
+.btn-timeline.btn-undo:disabled:hover,
+.btn-timeline.btn-redo:disabled:hover {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    transform: none;
+}
+
+.btn-timeline.btn-undo:not(:disabled):hover,
+.btn-timeline.btn-redo:not(:disabled):hover {
+    background: #e5e7eb;
+    border-color: #6366f1;
+    color: #6366f1;
 }

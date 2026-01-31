@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Default arrow cursor sprite for ScreenMu export rendering -->
+  <!-- LLM Disclosure: This file was generated with AI assistance -->
+  <!-- White fill with dark outline for visibility on any background -->
+  <path 
+    d="M 0,0 L 0,20.4 L 6,15.6 L 10.8,24 L 13.2,22.8 L 8.4,14.4 L 14.4,14.4 Z" 
+    fill="#ffffff" 
+    stroke="#000000" 
+    stroke-width="1.5"
+    stroke-linejoin="round"
+  />
+</svg>

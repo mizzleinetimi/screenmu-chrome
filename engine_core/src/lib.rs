@@ -7,6 +7,7 @@ mod cursor;
 mod effects;
 mod error;
 mod focus;
+mod time_remap;
 mod types;
 
 use wasm_bindgen::prelude::*;
@@ -16,6 +17,7 @@ pub use cursor::CursorTracker;
 pub use effects::EffectGenerator;
 pub use error::EngineError;
 pub use focus::FocusAnalyzer;
+pub use time_remap::{SpeedRamp, TimeRange, TimeRemapper, WasmTimeRemapper};
 pub use types::*;
 
 /// Initialize panic hook for better error messages in browser console.

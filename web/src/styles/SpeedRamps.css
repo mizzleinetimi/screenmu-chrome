@@ -1,0 +1,225 @@
+/* SpeedRamps Styles */
+/* Validates: Requirement 4.4 - THE timeline SHALL visually indicate speed ramp segments with their speed value */
+
+.speed-ramps {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 3; /* Above cut segments (z-index: 2) */
+}
+
+/* Speed ramp segment overlay - blue/purple gradient to distinguish from cuts (red) */
+/* Validates: Requirement 4.4 - Visual indicator for speed ramp segments */
+.speed-ramp {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 3;
+    
+    /* Default gradient - blue/purple for speed ramps */
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.4) 0%,
+        rgba(139, 92, 246, 0.4) 50%,
+        rgba(99, 102, 241, 0.4) 100%
+    );
+    
+    /* Border to clearly define speed ramp boundaries */
+    border-left: 2px solid rgba(99, 102, 241, 0.8);
+    border-right: 2px solid rgba(99, 102, 241, 0.8);
+    
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Slow-mo speed ramps (< 1x) - cooler blue tones */
+.speed-ramp.slow {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.45) 0%,
+        rgba(99, 102, 241, 0.45) 50%,
+        rgba(59, 130, 246, 0.45) 100%
+    );
+    border-left-color: rgba(59, 130, 246, 0.85);
+    border-right-color: rgba(59, 130, 246, 0.85);
+}
+
+/* Fast-forward speed ramps (> 1x) - warmer purple/magenta tones */
+.speed-ramp.fast {
+    background: linear-gradient(
+        135deg,
+        rgba(168, 85, 247, 0.45) 0%,
+        rgba(236, 72, 153, 0.35) 50%,
+        rgba(168, 85, 247, 0.45) 100%
+    );
+    border-left-color: rgba(168, 85, 247, 0.85);
+    border-right-color: rgba(168, 85, 247, 0.85);
+}
+
+/* Hover state for speed ramp segments */
+.speed-ramp:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.55) 0%,
+        rgba(139, 92, 246, 0.55) 50%,
+        rgba(99, 102, 241, 0.55) 100%
+    );
+    border-left-color: rgba(99, 102, 241, 1);
+    border-right-color: rgba(99, 102, 241, 1);
+}
+
+.speed-ramp.slow:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.6) 0%,
+        rgba(99, 102, 241, 0.6) 50%,
+        rgba(59, 130, 246, 0.6) 100%
+    );
+    border-left-color: rgba(59, 130, 246, 1);
+    border-right-color: rgba(59, 130, 246, 1);
+}
+
+.speed-ramp.fast:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(168, 85, 247, 0.6) 0%,
+        rgba(236, 72, 153, 0.5) 50%,
+        rgba(168, 85, 247, 0.6) 100%
+    );
+    border-left-color: rgba(168, 85, 247, 1);
+    border-right-color: rgba(168, 85, 247, 1);
+}
+
+/* Selected state for speed ramp segments */
+.speed-ramp.selected {
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.65) 0%,
+        rgba(139, 92, 246, 0.65) 50%,
+        rgba(99, 102, 241, 0.65) 100%
+    );
+    border-left: 3px solid rgba(99, 102, 241, 1);
+    border-right: 3px solid rgba(99, 102, 241, 1);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.speed-ramp.slow.selected {
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.7) 0%,
+        rgba(99, 102, 241, 0.7) 50%,
+        rgba(59, 130, 246, 0.7) 100%
+    );
+    border-left-color: rgba(59, 130, 246, 1);
+    border-right-color: rgba(59, 130, 246, 1);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.speed-ramp.fast.selected {
+    background: linear-gradient(
+        135deg,
+        rgba(168, 85, 247, 0.7) 0%,
+        rgba(236, 72, 153, 0.6) 50%,
+        rgba(168, 85, 247, 0.7) 100%
+    );
+    border-left-color: rgba(168, 85, 247, 1);
+    border-right-color: rgba(168, 85, 247, 1);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* Speed ramp icon indicator in the center of the segment */
+.speed-ramp-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(99, 102, 241, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.speed-ramp.slow .speed-ramp-icon {
+    background: rgba(59, 130, 246, 0.9);
+}
+
+.speed-ramp.fast .speed-ramp-icon {
+    background: rgba(168, 85, 247, 0.9);
+}
+
+.speed-ramp:hover .speed-ramp-icon,
+.speed-ramp.selected .speed-ramp-icon {
+    opacity: 1;
+}
+
+/* Speed ramp label showing speed value (e.g., "2x", "0.5x") */
+/* Validates: Requirement 4.4 - Display speed value (0.25x - 4x) */
+.speed-ramp-label {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 8px;
+    background: rgba(99, 102, 241, 0.95);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.speed-ramp.slow .speed-ramp-label {
+    background: rgba(59, 130, 246, 0.95);
+}
+
+.speed-ramp.fast .speed-ramp-label {
+    background: rgba(168, 85, 247, 0.95);
+}
+
+.speed-ramp:hover .speed-ramp-label,
+.speed-ramp.selected .speed-ramp-label {
+    opacity: 1;
+}
+
+/* Small speed ramp segments - smaller icon */
+.speed-ramp.small .speed-ramp-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+}
+
+.speed-ramp.small .speed-ramp-label {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+/* Very small speed ramp segments - minimal styling */
+.speed-ramp.tiny {
+    border-left-width: 1px;
+    border-right-width: 1px;
+}
+
+.speed-ramp.tiny .speed-ramp-icon {
+    display: none;
+}
+
+.speed-ramp.tiny .speed-ramp-label {
+    font-size: 9px;
+    padding: 2px 4px;
+}

@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 1a619286b7afe3ab411be753ff9d96dfdd6170559c747bac611a435e5cff6272 # shrinks to remapper = TimeRemapper { cuts: [TimeRange { start: Timestamp(482453), end: Timestamp(4254606) }], speed_ramps: [], in_point: Timestamp(0), out_point: Timestamp(482453) }, boundary_offset = 0
+cc 81268d98cf7447d89699e93a2ec09f7d96a09f921493263342cd6cdcc194fac6 # shrinks to remapper = TimeRemapper { cuts: [TimeRange { start: Timestamp(2354932), end: Timestamp(5447814) }], speed_ramps: [SpeedRamp { range: TimeRange { start: Timestamp(0), end: Timestamp(2354932) }, speed: 0.34733367 }], in_point: Timestamp(965576), out_point: Timestamp(2354932) }

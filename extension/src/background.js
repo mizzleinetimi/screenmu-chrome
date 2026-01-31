@@ -6,13 +6,17 @@ let isRecording = false;
 let recordingTabId = null;
 let startTime = 0;
 
+// Pending permission request state
+let pendingCaptureTabId = null;
+let pendingPermissions = { hasMic: false, hasCamera: false };
+
 // Store for accumulated signals
 const recordingData = {
     signals: [],
     startTime: 0,
 };
 
-// Handle messages from content scripts
+// Handle messages from content scripts and permissions page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
         case 'TAB_READY':
@@ -27,8 +31,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ success: true });
             break;
 
+        case 'PERMISSIONS_RESULT':
+            // Received from permissions.html page
+            console.log('[ScreenMu BG] Permissions result:', message.hasMic, message.hasCamera);
+            pendingPermissions = { hasMic: message.hasMic, hasCamera: message.hasCamera };
+            // Close the permissions tab
+            if (sender.tab?.id) {
+                chrome.tabs.remove(sender.tab.id);
+            }
+            // Now start the actual recording
+            if (pendingCaptureTabId !== null) {
+                handleStartCapture(pendingCaptureTabId, pendingPermissions)
+                    .then(() => console.log('[ScreenMu BG] Recording started after permissions'))
+                    .catch(err => console.error('[ScreenMu BG] Start capture failed:', err));
+                pendingCaptureTabId = null;
+            }
+            sendResponse({ success: true });
+            break;
+
         case 'START_TAB_CAPTURE':
-            handleStartCapture(sender.tab?.id)
+            // Legacy: First open permissions page, then start recording after result
+            requestPermissionsAndCapture(sender.tab?.id, message.options || {})
+                .then(() => sendResponse({ success: true }))
+                .catch((err) => sendResponse({ success: false, error: err.message }));
+            return true; // async response
+
+        case 'START_TAB_CAPTURE_DIRECT':
+            // New: Permissions already granted in popup, start directly
+            handleStartCapture(null, message.options || {})
                 .then(() => sendResponse({ success: true }))
                 .catch((err) => sendResponse({ success: false, error: err.message }));
             return true; // async response
@@ -38,6 +68,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 .then((result) => sendResponse({ success: true, ...result }))
                 .catch((err) => sendResponse({ success: false, error: err.message }));
             return true; // async response
+
+        case 'PAUSE_CAPTURE':
+            handlePauseCapture()
+                .then(() => sendResponse({ success: true }))
+                .catch((err) => sendResponse({ success: false, error: err.message }));
+            return true;
+
+        case 'RESUME_CAPTURE':
+            handleResumeCapture()
+                .then(() => sendResponse({ success: true }))
+                .catch((err) => sendResponse({ success: false, error: err.message }));
+            return true;
 
         case 'GET_STATUS':
             sendResponse({
@@ -74,8 +116,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
 });
 
-// Start tab capture
-async function handleStartCapture(tabId) {
+// Request permissions via dedicated page, then start capture
+async function requestPermissionsAndCapture(tabId) {
     if (isRecording) {
         throw new Error('Already recording');
     }
@@ -90,6 +132,63 @@ async function handleStartCapture(tabId) {
         throw new Error('No active tab');
     }
 
+    // Store the tab we want to record
+    pendingCaptureTabId = tabId;
+
+    // Open permissions page - it will request mic/camera and send PERMISSIONS_RESULT
+    const permissionsUrl = chrome.runtime.getURL('permissions.html');
+    await chrome.tabs.create({ url: permissionsUrl });
+
+    console.log('[ScreenMu BG] Opened permissions page, waiting for result...');
+}
+
+// Start tab capture
+async function handleStartCapture(tabId, options = {}) {
+    if (isRecording) {
+        throw new Error('Already recording');
+    }
+
+    if (!tabId) {
+        // Get current active tab
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        tabId = tab?.id;
+    }
+
+    if (!tabId) {
+        throw new Error('No active tab');
+    }
+
+    // Ensure content script is ready before starting capture
+    // Retry sending START_CAPTURE to content script with backoff
+    let contentScriptReady = false;
+    for (let i = 0; i < 10; i++) {
+        try {
+            await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+            contentScriptReady = true;
+            console.log('[ScreenMu BG] Content script ready on attempt', i + 1);
+            break;
+        } catch (e) {
+            console.log(`[ScreenMu BG] Content script not ready, attempt ${i + 1}/10`);
+            // Try to inject content script if not present
+            if (i === 0) {
+                try {
+                    await chrome.scripting.executeScript({
+                        target: { tabId },
+                        files: ['src/content.js']
+                    });
+                    console.log('[ScreenMu BG] Injected content script');
+                } catch (injectErr) {
+                    console.log('[ScreenMu BG] Could not inject (may already exist):', injectErr.message);
+                }
+            }
+            await new Promise(r => setTimeout(r, 300));
+        }
+    }
+
+    if (!contentScriptReady) {
+        throw new Error('Content script not responding. Please refresh the tab and try again.');
+    }
+
     // Get tab capture stream ID
     const streamId = await chrome.tabCapture.getMediaStreamId({
         targetTabId: tabId,
@@ -98,11 +197,15 @@ async function handleStartCapture(tabId) {
     // Create offscreen document for recording
     await ensureOffscreenDocument();
 
-    // Send stream to offscreen for recording
+    // Send stream to offscreen for recording (with permission flags)
     await chrome.runtime.sendMessage({
         type: 'START_RECORDING',
         target: 'offscreen',
         streamId,
+        options: {
+            hasMic: options.hasMic || false,
+            hasCamera: options.hasCamera || false,
+        },
     });
 
     // Tell content script to start capturing signals
@@ -115,6 +218,54 @@ async function handleStartCapture(tabId) {
     recordingData.startTime = Date.now();
 
     console.log('[ScreenMu] Recording started on tab:', tabId);
+}
+
+// Pause capture
+async function handlePauseCapture() {
+    if (!isRecording) {
+        throw new Error('Not recording');
+    }
+
+    // Tell content script to pause signal capture
+    if (recordingTabId) {
+        try {
+            await chrome.tabs.sendMessage(recordingTabId, { type: 'PAUSE_CAPTURE' });
+        } catch (e) {
+            // Tab might be closed
+        }
+    }
+
+    // Tell offscreen to pause recording
+    await chrome.runtime.sendMessage({
+        type: 'PAUSE_RECORDING',
+        target: 'offscreen',
+    });
+
+    console.log('[ScreenMu] Recording paused');
+}
+
+// Resume capture
+async function handleResumeCapture() {
+    if (!isRecording) {
+        throw new Error('Not recording');
+    }
+
+    // Tell content script to resume signal capture
+    if (recordingTabId) {
+        try {
+            await chrome.tabs.sendMessage(recordingTabId, { type: 'RESUME_CAPTURE' });
+        } catch (e) {
+            // Tab might be closed
+        }
+    }
+
+    // Tell offscreen to resume recording
+    await chrome.runtime.sendMessage({
+        type: 'RESUME_RECORDING',
+        target: 'offscreen',
+    });
+
+    console.log('[ScreenMu] Recording resumed');
 }
 
 // Stop capture

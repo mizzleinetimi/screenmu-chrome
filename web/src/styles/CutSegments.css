@@ -1,0 +1,142 @@
+/* CutSegments Styles */
+/* Validates: Requirement 3.2 - THE timeline SHALL visually indicate cut segments with a different color or pattern */
+
+.cut-segments {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Cut segment overlay - red striped pattern to distinguish from trimmed regions */
+/* Validates: Requirement 3.2 - Different color or pattern for cuts */
+.cut-segment {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 2;
+    
+    /* Red striped pattern - distinct from trim regions (solid dark overlay) */
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(239, 68, 68, 0.5),
+        rgba(239, 68, 68, 0.5) 4px,
+        rgba(239, 68, 68, 0.25) 4px,
+        rgba(239, 68, 68, 0.25) 8px
+    );
+    
+    /* Border to clearly define cut boundaries */
+    border-left: 2px solid rgba(239, 68, 68, 0.8);
+    border-right: 2px solid rgba(239, 68, 68, 0.8);
+    
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Hover state for cut segments */
+.cut-segment:hover {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(239, 68, 68, 0.65),
+        rgba(239, 68, 68, 0.65) 4px,
+        rgba(239, 68, 68, 0.35) 4px,
+        rgba(239, 68, 68, 0.35) 8px
+    );
+    border-left-color: rgba(239, 68, 68, 1);
+    border-right-color: rgba(239, 68, 68, 1);
+}
+
+/* Selected state for cut segments */
+.cut-segment.selected {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(239, 68, 68, 0.7),
+        rgba(239, 68, 68, 0.7) 4px,
+        rgba(239, 68, 68, 0.4) 4px,
+        rgba(239, 68, 68, 0.4) 8px
+    );
+    border-left: 3px solid rgba(239, 68, 68, 1);
+    border-right: 3px solid rgba(239, 68, 68, 1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Cut icon indicator in the center of the segment */
+.cut-segment-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(239, 68, 68, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.cut-segment:hover .cut-segment-icon,
+.cut-segment.selected .cut-segment-icon {
+    opacity: 1;
+}
+
+/* Scissors icon using CSS */
+.cut-segment-icon::before {
+    content: '✂';
+    font-size: 10px;
+    color: white;
+    line-height: 1;
+}
+
+/* Cut segment label showing "CUT" text */
+.cut-segment-label {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.cut-segment:hover .cut-segment-label,
+.cut-segment.selected .cut-segment-label {
+    opacity: 1;
+}
+
+/* Small cut segments - hide icon, show only on hover */
+.cut-segment.small .cut-segment-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.cut-segment.small .cut-segment-icon::before {
+    font-size: 8px;
+}
+
+/* Very small cut segments - minimal styling */
+.cut-segment.tiny {
+    border-left-width: 1px;
+    border-right-width: 1px;
+}
+
+.cut-segment.tiny .cut-segment-icon,
+.cut-segment.tiny .cut-segment-label {
+    display: none;
+}

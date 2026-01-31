@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>ScreenMu - Permissions</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            opacity: 0.9;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .status {
+            font-size: 18px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .status.requesting {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .status.granted {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .status.denied {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .permissions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .permission {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .permission.granted {
+            background: rgba(16, 185, 129, 0.5);
+        }
+
+        .permission.denied {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        .permission.pending {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎬 ScreenMu</h1>
+        <p>Grant microphone and camera access to enable audio/video recording.</p>
+        <div class="status requesting" id="status">Requesting permissions...</div>
+        <div class="permissions">
+            <div class="permission pending" id="mic-status">🎤 Microphone</div>
+            <div class="permission pending" id="cam-status">📷 Camera</div>
+        </div>
+    </div>
+
+    <script src="permissions.js"></script>
+</body>
+
+</html>

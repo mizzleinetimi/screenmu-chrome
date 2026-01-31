@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { RecordView } from './views/RecordView';
 import { EditView } from './views/EditView';
 import type { Project } from './types';
+import { DEFAULT_GRADIENT_PRESET_ID } from './rendering/background';
 import './styles/App.css';
 
 type View = 'home' | 'record' | 'edit';
@@ -126,6 +127,25 @@ function App() {
               theme: 'dark',
               clickRings: true,
               cursorHighlight: true,
+              backgroundGradient: DEFAULT_GRADIENT_PRESET_ID,
+              screenCornerRadius: 12,
+              screenShadowEnabled: true,
+              screenShadowBlur: 32,
+              deviceFrame: 'none',
+              // Camera bubble defaults - Requirements 4.1, 4.3
+              cameraBubblePosition: { x: 0.9, y: 0.85 },
+              cameraBubbleSize: 0.2,
+              cameraBubbleShape: 'circle',
+              cameraBubbleBorderWidth: 3,
+              cameraBubbleBorderColor: '#ffffff',
+              cameraBackgroundBlur: 0,
+              // Trim defaults - Requirements 2.2, 2.3
+              inPoint: 0,
+              outPoint: recordingData.duration * 1000, // ms to us
+              // Cut segments defaults - Requirement 3.1
+              cuts: [],
+              // Speed ramps defaults - Requirements 4.1, 4.2, 4.3
+              speedRamps: [],
             },
           };
 
@@ -191,6 +211,7 @@ function App() {
           project={currentProject}
           onExport={handleExport}
           onBack={() => setView('home')}
+          onProjectUpdate={setCurrentProject}
         />
       )}
     </div>

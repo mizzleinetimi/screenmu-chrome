@@ -1,0 +1,120 @@
+/* ZoomSegments component styles */
+/* Displays draggable zoom segments on the timeline */
+
+.zoom-segments-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.zoom-segments-container.dragging {
+    pointer-events: auto;
+    cursor: grabbing;
+}
+
+.zoom-segment {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0.2) 100%);
+    border: 2px solid #6366f1;
+    border-radius: 6px;
+    pointer-events: auto;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    min-width: 40px;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zoom-segment:hover {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.4) 0%, rgba(99, 102, 241, 0.3) 100%);
+    border-color: #818cf8;
+}
+
+.zoom-segment.selected {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.5) 0%, rgba(99, 102, 241, 0.4) 100%);
+    border-color: #818cf8;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.zoom-segment.dragging {
+    cursor: grabbing;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    z-index: 10;
+}
+
+/* Resize handles */
+.zoom-segment-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: ew-resize;
+    background: rgba(99, 102, 241, 0.3);
+    transition: background 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-segment-handle::after {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: rgba(99, 102, 241, 0.6);
+    border-radius: 2px;
+}
+
+.zoom-segment-handle:hover {
+    background: rgba(99, 102, 241, 0.5);
+}
+
+.zoom-segment-handle:hover::after {
+    background: #6366f1;
+}
+
+.zoom-segment-handle-left {
+    left: -2px;
+    border-radius: 6px 0 0 6px;
+}
+
+.zoom-segment-handle-right {
+    right: -2px;
+    border-radius: 0 6px 6px 0;
+}
+
+/* Segment body */
+.zoom-segment-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    cursor: grab;
+    user-select: none;
+}
+
+.zoom-segment.dragging .zoom-segment-body {
+    cursor: grabbing;
+}
+
+/* Zoom level label */
+.zoom-segment-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6366f1;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-shadow: none;
+}
+
+.zoom-segment.selected .zoom-segment-label {
+    background: #fff;
+    color: #4f46e5;
+}
