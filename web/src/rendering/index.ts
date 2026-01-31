@@ -153,6 +153,12 @@ export {
   interpolateViewportFromKeyframes,
   interpolateViewportFromZoomSegments,
   interpolateViewportCombined,
+  // Cinematic easing functions
+  easeInOutCubic,
+  easeOutQuint,
+  easeInQuint,
+  easeOutElastic,
+  easeOutBack,
 } from './keyframe';
 
 // Time remapping utilities (Phase 3 - Speed Ramps)

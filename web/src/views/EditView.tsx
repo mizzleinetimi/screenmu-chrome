@@ -2084,7 +2084,7 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
             const chunks: Blob[] = [];
             const recorder = new MediaRecorder(canvasStream, {
                 mimeType: 'video/webm;codecs=vp9,opus',
-                videoBitsPerSecond: 5000000,
+                videoBitsPerSecond: 8000000, // Increased bitrate for better quality
             });
 
             recorder.ondataavailable = (e) => {
@@ -2116,11 +2116,26 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                 fps
             );
 
+            // Helper function to wait for camera seek
+            const waitForCameraSeek = async (cameraEl: HTMLVideoElement, timeSeconds: number): Promise<void> => {
+                return new Promise((resolve) => {
+                    const onSeeked = () => {
+                        cameraEl.removeEventListener('seeked', onSeeked);
+                        resolve();
+                    };
+                    cameraEl.addEventListener('seeked', onSeeked);
+                    cameraEl.currentTime = timeSeconds;
+                    // Timeout fallback in case seeked event doesn't fire
+                    setTimeout(resolve, 100);
+                });
+            };
+
             // Process each frame sequentially
             // Validates: Requirements 1.1, 1.2, 2.1, 2.5, 3.1, 5.4
             for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
                 // Use source timestamp for seeking video (offset by inPoint)
                 const sourceTimestampUs = sourceTimestamps[frameIndex];
+                const sourceTimeSec = sourceTimestampUs / 1_000_000;
 
                 // Seek video to source timestamp
                 const seekResult = await waitForVideoSeek(video, sourceTimestampUs);
@@ -2128,9 +2143,11 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                     console.warn(`[EditView] Seek failed for frame ${frameIndex}, using last frame`);
                 }
 
-                // Sync camera video if available
-                if (camera && project.cameraBlob) {
-                    camera.currentTime = sourceTimestampUs / 1_000_000;
+                // Sync camera video if available - wait for seek to complete
+                let cameraReady = false;
+                if (camera && project.cameraBlob && camera.readyState >= 2) {
+                    await waitForCameraSeek(camera, sourceTimeSec);
+                    cameraReady = true;
                 }
 
                 // Get viewport by interpolating from zoom segments and keyframes
@@ -2142,8 +2159,7 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                 // Validates: Requirement 2.1
                 const activeEffects = findActiveEffects(effectTracks, sourceTimestampUs);
 
-                // Render frame using compositor
-                // Note: Cursor rendering disabled - using real cursor for zoom tracking instead
+                // Render frame using compositor with camera
                 // Validates: Requirements 1.2, 2.3, 4.1, 4.2, 4.3, 4.5
                 compositor.renderFrame(
                     video,
@@ -2154,8 +2170,12 @@ export function EditView({ project, onBack, onProjectUpdate }: EditViewProps) {
                         cursorPosition: null,
                         cursorOpacity: 0,
                     },
-                    camera && project.cameraBlob && camera.readyState >= 2 ? camera : undefined
+                    cameraReady && camera ? camera : undefined
                 );
+
+                // Small delay to allow canvas stream to capture the frame
+                // This prevents lag and ensures smooth playback
+                await new Promise(resolve => setTimeout(resolve, 16));
 
                 // Update progress
                 // Validates: Requirement 5.4
